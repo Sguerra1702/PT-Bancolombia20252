@@ -48,6 +48,13 @@ public class Producto {
         this.CantidadStock = CantidadStock;
     }
 
+    /**
+     * Calcula el valor total del stock del producto.
+     *
+     * 
+     * 
+     * @return El valor total del stock.
+     */
     public String getTotalStockValue(){
         return Double.toString(precio * CantidadStock);
     }
