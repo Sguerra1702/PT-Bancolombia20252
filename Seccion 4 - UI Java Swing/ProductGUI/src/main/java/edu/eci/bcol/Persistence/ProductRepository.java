@@ -14,7 +14,9 @@ public class ProductRepository {
         productos.add(producto);
     }
 
-    public List<Product> obtenerTodos() {
+    public List<Product> getAll() {
         return productos;
     }
+
+
 }

@@ -99,21 +99,27 @@ En la clase SegundoMayor se encuentra la solucion al ejercicio -  Se recorrió l
 
 
 ### Ejercicio 2: Reservas en el cine
-
+Para este ejercicio, se recorre la matriz buscando ceros que esten en las posiciones inmediatamente siguientes y así determinar si la reserva se puede hacer
+![](/img/6.png)
 
 
 Ver: `Seccion 3 - Algoritmos/`
 
----
-
 ## Sección 4 - Javax/Swing
 
 ### Ejercicio 1: Interfaz Gráfica
+Teniendo en cuenta que este proyecto más adelante usará Apache POI para generar los archivos de excel, se decidió usar maven para la arquitectura del proyecto, una vez generado el scaffolding, se dividió el programa en paquetes: Dominio, el cual aloja la lógica del programa (Clase Producto). Persistencia, que guarda en memoria (una lista) los productos registrados y Presentación que se encarga de la interfaz gráfica del software. Aquí una captura de la aplicación funcionando:
+![](/img/7.png)
 
+Luego, al ingresar y guardar un producto:
+![](/img/8.png)
 
 
 ### Ejercicio 2: Generación de archivo Excel
+Utilizando la dependencia de Apache POI, se generó un archivo excel protegido con contraseña que muestra la lista de productos con un timestamp indicando el momento que fue añadido:
+![](/img/9.png)
 
+![](/img/10.png)
 
 
 Ver: `Seccion 4 - Javax Swing/`
@@ -121,5 +127,7 @@ Ver: `Seccion 4 - Javax Swing/`
 
 
 ##  Notas Finales
-
+- Para verificar las consultas, se recomienda instalar la extensión MySQL Shell for VS Code
+- Los archivos de java Se pueden ejecutar con la extensión de java para VS Code
+- El proyecto de la sección 4 - UI con java Swing se recomienda ejecutar con un IDE como intellij para la carga de los repositorios de maven central.
 

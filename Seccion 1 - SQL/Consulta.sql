@@ -40,3 +40,14 @@ GROUP BY
     c.nombre
 HAVING 
     SUM(p.monto) > 1000;
+
+-- Consulta corregida
+
+SELECT 
+    c.nombre,
+    SUM(p.monto) as total_gastado
+FROM 
+    Clientes c
+    INNER JOIN Pedidos p ON c.id = p.cliente_id
+GROUP BY 
+    c.nombre;

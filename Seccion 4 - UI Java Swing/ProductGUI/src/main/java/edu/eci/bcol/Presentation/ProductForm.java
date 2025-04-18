@@ -6,8 +6,23 @@ import edu.eci.bcol.Persistence.ProductRepository;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.util.Random;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.*;
+
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.util.ZipEntrySource;
+import org.apache.poi.poifs.crypt.*;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+import java.io.FileOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class ProductForm extends JFrame {
     private JTextField nombreField;
@@ -69,13 +84,20 @@ public class ProductForm extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel();
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
+        // Botón Guardar
         JButton guardarBtn = createStyledButton("Guardar");
         guardarBtn.addActionListener(this::saveProducto);
+
+        // Nuevo botón para generar Excel
+        JButton excelBtn = createStyledButton("Generar Excel");
+        excelBtn.addActionListener(this::generateExcel);
+
         bottomPanel.add(guardarBtn);
+        bottomPanel.add(excelBtn);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -129,7 +151,7 @@ public class ProductForm extends JFrame {
             String nombre = nombreField.getText();
             double precio = Double.parseDouble(precioField.getText());
             int cantidad = Integer.parseInt(cantidadField.getText());
-            int id = new Random().nextInt();
+            int id = Math.abs(new Random().nextInt());
             Product producto = new Product(id, nombre, precio, cantidad);
             repositorio.save(producto);
 
@@ -149,6 +171,96 @@ public class ProductForm extends JFrame {
                     this,
                     "Por favor, verifique los datos ingresados:\n- El precio debe ser un número decimal\n- La cantidad debe ser un número entero",
                     "Error de validación",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void generateExcel(ActionEvent e) {
+        try {
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = workbook.createSheet("Productos");
+            String password = "Bancolombia2025";
+
+            // Estilos del encabezado
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            XSSFFont headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            // Crear encabezados
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"ID", "Nombre", "Precio", "Cantidad", "Fecha Registro"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Añadir datos
+            List<Product> productos = repositorio.getAll();
+            int rowNum = 1;
+            for (Product producto : productos) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(producto.getId());
+                row.createCell(1).setCellValue(producto.getNombre());
+                row.createCell(2).setCellValue(producto.getPrecio());
+                row.createCell(3).setCellValue(producto.getCantidadStock());
+                row.createCell(4).setCellValue(
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                );
+            }
+
+            // Ajustar columnas
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Proteger la hoja
+            sheet.protectSheet(password);
+
+            // Nombre del archivo
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String fileName = "Productos_" + timestamp + ".xlsx";
+
+            // Guardar el archivo
+            try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
+                // Crear el paquete temporal
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                workbook.write(bos);
+
+                // Configurar la encriptación
+                POIFSFileSystem fs = new POIFSFileSystem();
+                EncryptionInfo info = new EncryptionInfo(EncryptionMode.agile);
+                Encryptor enc = info.getEncryptor();
+                enc.confirmPassword(password);
+
+                // Encriptar y guardar
+                try (OutputStream os = enc.getDataStream(fs)) {
+                    os.write(bos.toByteArray());
+                }
+                fs.writeFilesystem(fileOut);
+            }
+
+            workbook.close();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Archivo Excel generado exitosamente:\n" +
+                            "Nombre: " + fileName + "\n" +
+                            "Contraseña: " + password + "\n" +
+                            "Total de productos: " + (rowNum - 1),
+                    "Excel Generado",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al generar el archivo Excel:\n" + ex.getMessage(),
+                    "Error",
                     JOptionPane.ERROR_MESSAGE
             );
         }
